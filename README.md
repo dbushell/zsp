@@ -1,10 +1,10 @@
 # ⚡ zigbar
 
-zigbar is my personal ZSH prompt written in [Zig](https://ziglang.org).
+Zigbar is my personal ZSH prompt written in [Zig](https://ziglang.org).
 
-Inspired by [Starship](https://github.com/starship/starship) and [Pure](https://github.com/sindresorhus/pure).
+Inspired by [Starship](https://github.com/starship/starship) and [Pure](https://github.com/sindresorhus/pure). Requires a [Nerd Font](https://www.nerdfonts.com).
 
-🚧 Under construction!
+🚧 Under Construction 🚧
 
 * * *
 

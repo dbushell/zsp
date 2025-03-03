@@ -33,14 +33,6 @@ pub fn main() !void {
     defer context.deinit();
     try context.scanAll();
 
-    // Remove Node.js false positive
-    // @TODO Handle multi-runtime projects, e.g. SvelteKit?
-    if (context.is(.node)) {
-        if (context.is(.bun) or context.is(.deno)) {
-            _ = context.props.remove(.node);
-        }
-    }
-
     var host = Host{};
 
     try tty.write("\n");

@@ -185,6 +185,12 @@ pub fn scanAll(self: *Context) !void {
         defer self.allocator.free(path);
         if (eql(u8, path, "/")) break;
     }
+    // Remove Node.js false positive
+    if (self.is(.node)) {
+        if (self.is(.bun) or self.is(.deno)) {
+            _ = self.props.remove(.node);
+        }
+    }
 }
 
 /// Check all entries inside the open directory
