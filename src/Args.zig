@@ -52,11 +52,16 @@ pub fn init(allocator: Allocator) !Args {
                 value = .{ .int = try std.fmt.parseInt(usize, value.string, 10) };
             }
         }
-        try args.items.put(key, value);
+        try args.items.put(
+            try allocator.dupe(u8, key),
+            value,
+        );
     }
     return args;
 }
 
 pub fn deinit(self: *Args) void {
+    var keys = self.items.keyIterator();
+    while (keys.next()) |k| self.allocator.free(k.*);
     self.items.deinit();
 }
