@@ -43,6 +43,7 @@ pub fn main() !void {
 
     var host = Host{};
 
+    try tty.write("\n");
     try tty.color(.dim);
     try tty.print("{s}", .{host.user()});
     try tty.color(.reset);
@@ -53,20 +54,21 @@ pub fn main() !void {
 
     try context.print(&tty);
 
+    // Use remaining space for current path
     const path = try std.fs.cwd().realpathAlloc(allocator, ".");
     defer allocator.free(path);
-
     try tty.color(.dim);
     try tty.write(" ");
     if (path.len < tty.remaining()) {
-        try tty.print("{s}\n", .{path});
-    } else {
-        try tty.print("{s}…\n", .{path[0 .. tty.remaining() - 1]});
+        try tty.print("{s}", .{path});
+    } else if (tty.remaining() > 10) {
+        try tty.print("{s}…", .{path[0 .. tty.remaining() - 1]});
     }
     try tty.color(.reset);
 
-    try tty.color(.blue);
-    try tty.print("→ ", .{});
-
+    // New line for input command
+    try tty.color(.cyan);
+    try tty.color(.bold);
+    try tty.print("\n→ ", .{});
     try tty.color(.reset);
 }

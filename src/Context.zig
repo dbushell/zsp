@@ -124,14 +124,16 @@ pub fn print(self: Context, tty: *TTY) !void {
     }
     if (self.is(.git)) {
         if (self.gitBranch()) |branch| {
+            const dirty = self.gitDirty();
             defer self.allocator.free(branch);
             try tty.color(.white);
             try tty.write(" on ");
-            try tty.color(.magenta);
+            try tty.color(if (dirty) .red else .magenta);
             try tty.color(.bold);
-            try tty.print("{s} {s}", .{
+            try tty.print("{s} {s}{s}", .{
                 Prop.git.symbol(),
                 std.mem.trimRight(u8, branch, " \n"),
+                if (dirty) "*" else "",
             });
         }
     }
@@ -151,6 +153,20 @@ pub fn gitBranch(self: Context) ?[]const u8 {
     self.allocator.free(result.stderr);
     self.allocator.free(result.stdout);
     return null;
+}
+
+pub fn gitDirty(self: Context) bool {
+    if (!self.is(.git)) return false;
+    const result = std.process.Child.run(.{
+        .allocator = self.allocator,
+        .argv = &.{ "git", "diff", "--no-ext-diff", "--quiet", "--exit-code" },
+    }) catch return false;
+    self.allocator.free(result.stderr);
+    self.allocator.free(result.stdout);
+    return switch (result.term) {
+        .Exited => |code| (code == 1),
+        else => false,
+    };
 }
 
 /// Scan parent directories to populate context
