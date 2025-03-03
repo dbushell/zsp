@@ -32,7 +32,7 @@ pub const Prop = enum {
 
     /// Spawn child process to get the version string.
     /// If successful, caller owns result.
-    pub fn version(prop: Prop, allocator: Allocator) !?[]const u8 {
+    pub fn version(prop: Prop, allocator: Allocator) ?[]const u8 {
         if (prop.versionArgv()) |argv| {
             const result = std.process.Child.run(.{
                 .allocator = allocator,
@@ -83,7 +83,7 @@ allocator: Allocator,
 cwd: Dir,
 props: AutoHashMap(Prop, void),
 
-pub fn init(allocator: Allocator, cwd: std.fs.Dir) Context {
+pub fn init(allocator: Allocator, cwd: Dir) Context {
     return Context{
         .allocator = allocator,
         .cwd = cwd,
@@ -99,15 +99,17 @@ pub fn is(self: Context, prop: Prop) bool {
     return self.props.contains(prop);
 }
 
-pub fn print(self: Context, tty: TTY) !void {
+/// Write formatted prompt line
+pub fn print(self: Context, tty: *TTY) !void {
     inline for (std.meta.fields(Prop)) |field| {
+        try tty.color(.reset);
         const prop: Prop = @enumFromInt(field.value);
         if (self.props.contains(prop)) {
-            try tty.setColor(.white);
+            try tty.color(.white);
             try tty.write(" via ");
-            try tty.setColor(.yellow);
+            try tty.color(.yellow);
             try tty.write(prop.symbol());
-            const version = try prop.version(self.allocator);
+            const version = prop.version(self.allocator);
             if (version) |string| {
                 defer self.allocator.free(string);
                 try tty.write(" ");
@@ -115,9 +117,10 @@ pub fn print(self: Context, tty: TTY) !void {
             }
         }
     }
-    try tty.setColor(.reset);
+    try tty.color(.reset);
 }
 
+/// Scan parent directories to populate context
 pub fn scanAll(self: *Context) !void {
     var dir = try self.cwd.openDir("./", .{});
     defer dir.close();

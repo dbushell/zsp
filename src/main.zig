@@ -1,9 +1,7 @@
 const std = @import("std");
-const builtin = @import("builtin");
 const Context = @import("./Context.zig");
 const Host = @import("./Host.zig");
 const TTY = @import("./TTY.zig");
-const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
 pub fn main() !void {
@@ -17,7 +15,7 @@ pub fn main() !void {
     // defer arena.deinit();
     // const allocator = arena.allocator();
 
-    const tty = TTY.init();
+    var tty = TTY.init();
 
     var context = Context.init(allocator, std.fs.cwd());
     defer context.deinit();
@@ -33,26 +31,26 @@ pub fn main() !void {
 
     var host = Host{};
 
-    try tty.setColor(.dim);
+    try tty.color(.dim);
     try tty.print("{s}", .{host.user()});
-    try tty.setColor(.reset);
-    try tty.setColor(.bold);
-    try tty.setColor(.green);
+    try tty.color(.reset);
+    try tty.color(.bold);
+    try tty.color(.green);
     try tty.print("@{s}", .{try host.name()});
-    try tty.setColor(.reset);
+    try tty.color(.reset);
     try tty.print(" {s}", .{host.emoji()});
 
-    try context.print(tty);
+    try context.print(&tty);
 
     const path = try std.fs.cwd().realpathAlloc(allocator, ".");
     defer allocator.free(path);
 
-    try tty.setColor(.dim);
+    try tty.color(.dim);
     try tty.print(" {s}\n", .{path});
-    try tty.setColor(.reset);
+    try tty.color(.reset);
 
-    try tty.setColor(.blue);
+    try tty.color(.blue);
     try tty.print("→ ", .{});
 
-    try tty.setColor(.reset);
+    try tty.color(.reset);
 }
