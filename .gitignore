@@ -1,0 +1,8 @@
+.zig-cache
+zig-out
+**/*.*
+!**/*.zig
+!init.sh
+!.gitignore
+!LICENSE
+!README.md
