@@ -1,6 +1,6 @@
-# ⚡ Zigbar
+# ⚡ zigbar
 
-Zigbar is my personal ZSH prompt written in [Zig](https://ziglang.org).
+zigbar is my personal ZSH prompt written in [Zig](https://ziglang.org).
 
 Inspired by [Starship](https://github.com/starship/starship) and [Pure](https://github.com/sindresorhus/pure).
 

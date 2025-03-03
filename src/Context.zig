@@ -8,12 +8,13 @@ const extension = std.fs.path.extension;
 const isDigit = std.ascii.isDigit;
 
 /// Limit number of parent directories to scan (inclusive of current directory)
-const max_scan_depth = 10;
+const max_scan_depth = 5;
 
 pub const Prop = enum {
     bun,
     deno,
     docker,
+    git,
     node,
     rust,
     zig,
@@ -24,6 +25,7 @@ pub const Prop = enum {
             .bun => "",
             .deno => "",
             .docker => "󰡨",
+            .git => "",
             .node => "󰎙",
             .rust => "󱘗",
             .zig => "",
@@ -57,6 +59,7 @@ pub const Prop = enum {
             .node => &.{ "node", "-v" },
             .rust => &.{ "rustc", "--version" },
             .zig => &.{ "zig", "version" },
+            else => null,
         };
     }
 
@@ -105,19 +108,49 @@ pub fn print(self: Context, tty: *TTY) !void {
         try tty.color(.reset);
         const prop: Prop = @enumFromInt(field.value);
         if (self.props.contains(prop)) {
-            try tty.color(.white);
-            try tty.write(" via ");
-            try tty.color(.yellow);
-            try tty.write(prop.symbol());
-            const version = prop.version(self.allocator);
-            if (version) |string| {
-                defer self.allocator.free(string);
-                try tty.write(" ");
-                try tty.write(prop.versionFormat(string));
+            if (prop != .git) {
+                try tty.color(.white);
+                try tty.write(" | ");
+                try tty.color(.yellow);
+                try tty.write(prop.symbol());
+                const version = prop.version(self.allocator);
+                if (version) |string| {
+                    defer self.allocator.free(string);
+                    try tty.write(" ");
+                    try tty.write(prop.versionFormat(string));
+                }
             }
         }
     }
+    if (self.is(.git)) {
+        if (self.gitBranch()) |branch| {
+            defer self.allocator.free(branch);
+            try tty.color(.white);
+            try tty.write(" on ");
+            try tty.color(.magenta);
+            try tty.color(.bold);
+            try tty.print("{s} {s}", .{
+                Prop.git.symbol(),
+                std.mem.trimRight(u8, branch, " \n"),
+            });
+        }
+    }
     try tty.color(.reset);
+}
+
+pub fn gitBranch(self: Context) ?[]const u8 {
+    if (!self.is(.git)) return null;
+    const result = std.process.Child.run(.{
+        .allocator = self.allocator,
+        .argv = &.{ "git", "branch", "--show-current" },
+    }) catch return null;
+    if (result.term == .Exited) {
+        self.allocator.free(result.stderr);
+        return result.stdout;
+    }
+    self.allocator.free(result.stderr);
+    self.allocator.free(result.stdout);
+    return null;
 }
 
 /// Scan parent directories to populate context
@@ -150,7 +183,9 @@ pub fn scanDirectory(self: *Context, open_dir: *Dir) void {
 pub fn scanEntry(self: *Context, entry: Dir.Entry) void {
     const result: ?Prop = switch (entry.kind) {
         .directory => result: {
-            if (eql(u8, entry.name, "node_modules")) {
+            if (eql(u8, entry.name, ".git")) {
+                break :result .git;
+            } else if (eql(u8, entry.name, "node_modules")) {
                 break :result .node;
             } else if (eql(u8, entry.name, "zig-out")) {
                 break :result .zig;
