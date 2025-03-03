@@ -1,6 +1,7 @@
 const std = @import("std");
 const mem = std.mem;
 const Allocator = std.mem.Allocator;
+const StringHashMap = std.StringHashMap;
 
 pub const Tag = enum {
     bool,
@@ -14,17 +15,15 @@ pub const Value = union(Tag) {
     string: []const u8,
 };
 
-const ArgsMap = std.StringHashMap(Value);
-
 const Args = @This();
 
 allocator: Allocator,
-items: ArgsMap,
+items: StringHashMap(Value),
 
 pub fn init(allocator: Allocator) !Args {
     var args = Args{
         .allocator = allocator,
-        .items = ArgsMap.init(allocator),
+        .items = StringHashMap(Value).init(allocator),
     };
     var iter = std.process.args();
     while (iter.next()) |arg| {
@@ -40,21 +39,18 @@ pub fn init(allocator: Allocator) !Args {
             key = key[0..i];
         }
         // Parse boolean or integer values
-        switch (value) {
-            .string => |string| parse: {
-                // Empty string or "true" string is truthy
-                if (string.len == 0 or mem.eql(u8, string, "true")) {
-                    value = .{ .bool = true };
-                    // "false" string is falsy
-                } else if (mem.eql(u8, string, "false")) {
-                    value = .{ .bool = false };
-                } else {
-                    // Parse string as integer
-                    for (string) |c| if (!std.ascii.isDigit(c)) break :parse;
-                    value = .{ .int = try std.fmt.parseInt(usize, string, 10) };
-                }
-            },
-            else => {},
+        if (value == .string) parse: {
+            // Empty string or "true" string is truthy
+            if (value.string.len == 0 or mem.eql(u8, value.string, "true")) {
+                value = .{ .bool = true };
+                // "false" string is falsy
+            } else if (mem.eql(u8, value.string, "false")) {
+                value = .{ .bool = false };
+            } else {
+                // Parse string as integer
+                for (value.string) |c| if (!std.ascii.isDigit(c)) break :parse;
+                value = .{ .int = try std.fmt.parseInt(usize, value.string, 10) };
+            }
         }
         try args.items.put(key, value);
     }

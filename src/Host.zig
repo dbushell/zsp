@@ -22,14 +22,27 @@ pub fn name(self: *Host) ![]const u8 {
     return hostname;
 }
 
+/// Returns the device model
+pub fn model(_: Host) ?[]const u8 {
+    const file = std.fs.openFileAbsolute(
+        "/sys/firmware/devicetree/base/model",
+        .{ .mode = .read_only },
+    ) catch return null;
+    var buf = [_]u8{0} ** 64;
+    const size = file.read(&buf) catch return null;
+    return if (size > 1) buf[0..size] else null;
+}
+
 /// Returns an OS emoji
-pub fn emoji(_: Host) []const u8 {
+pub fn emoji(self: Host) []const u8 {
     return switch (builtin.os.tag) {
         .macos => "",
         .linux => emoji: {
-            // @TODO Check uname for Raspberry Pi or Proxmox etc
-            break :emoji "";
+            if (self.model()) |string| {
+                if (mem.indexOf(u8, string, "Raspberry Pi")) |_| break :emoji "";
+            }
+            break :emoji "";
         },
-        else => "",
+        else => "󱁣",
     };
 }
