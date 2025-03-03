@@ -13,6 +13,12 @@ pub fn user(_: Host) []const u8 {
     return if (maybe) |string| string else "user";
 }
 
+/// Returns `true` for remote sessions
+pub fn ssh(_: Host) bool {
+    const maybe = posix.getenv("SSH_CONNECTION");
+    return if (maybe) |_| true else false;
+}
+
 /// Returns the system hostname
 pub fn name(self: *Host) ![]const u8 {
     const hostname = try posix.gethostname(&self.hostname_buffer);

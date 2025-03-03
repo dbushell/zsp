@@ -69,6 +69,8 @@ pub fn main() !void {
     // New line for input command
     try tty.color(.cyan);
     try tty.color(.bold);
-    try tty.print("\n→ ", .{});
+    try tty.write("\n");
+    if (host.ssh()) try tty.write("SSH ");
+    try tty.print("→ ", .{});
     try tty.color(.reset);
 }
