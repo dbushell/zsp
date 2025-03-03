@@ -171,13 +171,13 @@ pub fn gitDirty(self: Context) bool {
 
 /// Scan parent directories to populate context
 pub fn scanAll(self: *Context) !void {
-    var dir = try self.cwd.openDir("./", .{});
+    var dir = try self.cwd.openDir(".", .{ .iterate = true });
     defer dir.close();
     var depth: usize = 0;
     while (true) : (depth += 1) {
         if (depth == max_scan_depth) break;
         self.scanDirectory(&dir);
-        const parent = try dir.openDir("../", .{});
+        const parent = try dir.openDir("../", .{ .iterate = true });
         dir.close();
         dir = parent;
         // Exit once root is reached
