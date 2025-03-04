@@ -47,7 +47,7 @@ pub fn print(self: *Self, comptime format: []const u8, args: anytype) void {
 /// Set current prompt ASNI style
 pub fn ansi(self: *Self, styles: []const Color) void {
     for (styles) |s| {
-        if (self.color == s) return;
+        if (self.color == s) continue;
         _ = self.writer.write("%{") catch return;
         self.config.setColor(self.writer, s) catch return;
         _ = self.writer.write("%}") catch return;

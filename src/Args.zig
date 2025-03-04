@@ -30,8 +30,13 @@ pub fn init(allocator: Allocator) !Self {
 }
 
 pub fn deinit(self: *Self) void {
-    var keys = self.items.keyIterator();
-    while (keys.next()) |k| self.allocator.free(k.*);
+    var keys = self.items.iterator();
+    while (keys.next()) |entry| {
+        if (entry.value_ptr.* == .string) {
+            self.allocator.free(entry.value_ptr.string);
+        }
+        self.allocator.free(entry.key_ptr.*);
+    }
     self.items.deinit();
 }
 
@@ -62,6 +67,9 @@ fn processArgs(self: *Self) !void {
                 for (value.string) |c| if (!std.ascii.isDigit(c)) break :parse;
                 value = .{ .int = try std.fmt.parseInt(usize, value.string, 10) };
             }
+        }
+        if (value == .string) {
+            value.string = try self.allocator.dupe(u8, value.string);
         }
         try self.items.put(
             try self.allocator.dupe(u8, key),

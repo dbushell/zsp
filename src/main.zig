@@ -24,15 +24,15 @@ pub fn main() !void {
 
     if (!args.items.contains("prompt")) return;
 
+    var context = Context.init(allocator, std.fs.cwd());
+    defer context.deinit();
+    try context.scan();
+
     const columns: usize = if (args.items.get("columns")) |entry| value: {
         break :value entry.int;
     } else default_columns;
 
     var tty = TTY.init(columns);
-
-    var context = Context.init(allocator, std.fs.cwd());
-    defer context.deinit();
-    try context.scan();
 
     var host = Host{};
 
@@ -43,6 +43,17 @@ pub fn main() !void {
     tty.print("@{s}", .{try host.name()});
     tty.ansi(&.{.reset});
     tty.print(" {s}", .{host.emoji()});
+
+    // Last command execution time
+    if (args.items.get("duration")) |duration| {
+        if (duration == .int and duration.int >= 100) {
+            tty.ansi(&.{.reset});
+            tty.write(" | ");
+            // const delta: i64 = std.time.milliTimestamp() - @as(i64, @intCast(duration.int));
+            const time = std.fmt.fmtDuration(@intCast(std.time.ns_per_ms * duration.int));
+            tty.print("{d}", .{time});
+        }
+    }
 
     try context.print(&tty);
 
@@ -57,7 +68,7 @@ pub fn main() !void {
             cwd_home = true;
         }
     }
-    tty.ansi(&.{.dim});
+    tty.ansi(&.{ .reset, .dim });
     tty.write(" ");
     if (cwd_home) tty.write("~");
     if (cwd.len < tty.remaining()) {
@@ -65,10 +76,9 @@ pub fn main() !void {
     } else if (tty.remaining() > 10) {
         tty.print("{s}…", .{cwd[0 .. tty.remaining() - 1]});
     }
-    tty.ansi(&.{.reset});
 
     // New line for input command
-    tty.ansi(&.{ .cyan, .bold });
+    tty.ansi(&.{ .reset, .cyan, .bold });
     tty.write("\n");
     if (host.ssh()) tty.write("SSH ");
     tty.print("→ ", .{});
