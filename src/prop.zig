@@ -8,6 +8,7 @@ pub const Prop = enum {
     docker,
     git,
     node,
+    php,
     rust,
     zig,
 
@@ -19,6 +20,7 @@ pub const Prop = enum {
             .docker => "󰡨",
             .git => "",
             .node => "󰎙",
+            .php => "",
             .rust => "󱘗",
             .zig => "",
         };
@@ -49,6 +51,7 @@ pub const Prop = enum {
             .deno => &.{ "deno", "-v" },
             .docker => &.{ "docker", "-v" },
             .node => &.{ "node", "-v" },
+            .php => &.{ "php", "--version" },
             .rust => &.{ "rustc", "--version" },
             .zig => &.{ "zig", "version" },
             else => null,

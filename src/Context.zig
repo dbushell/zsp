@@ -96,7 +96,6 @@ pub fn scan(self: *Self) !void {
         dir.close();
         dir = parent;
         // Exit once root is reached
-
         if (eql(u8, path, "/")) break;
     }
     // Remove Node.js false positive
@@ -152,6 +151,8 @@ fn scanEntry(self: *Self, entry: Dir.Entry, dir_name: []const u8) void {
                 break :result .docker;
             } else if (eql(u8, entry.name, "package.json")) {
                 break :result .node;
+            } else if (eql(u8, ext, ".php")) {
+                break :result .php;
             } else if (eql(u8, ext, ".rs")) {
                 break :result .rust;
             } else if (eql(u8, ext, ".zig")) {

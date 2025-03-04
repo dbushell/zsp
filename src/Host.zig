@@ -5,7 +5,7 @@ const posix = std.posix;
 
 const Self = @This();
 
-hostname_buffer: [std.posix.HOST_NAME_MAX]u8 = [_]u8{0} ** std.posix.HOST_NAME_MAX,
+hostname_buffer: [posix.HOST_NAME_MAX]u8 = [_]u8{0} ** posix.HOST_NAME_MAX,
 
 /// Returns the logged in username
 pub fn user(_: Self) []const u8 {
