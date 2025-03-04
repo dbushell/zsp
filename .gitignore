@@ -3,6 +3,8 @@ zig-out
 **/*.*
 !**/*.zig
 !init.sh
+!.github
+!.github/screenshot.avif
 !.gitignore
 !LICENSE
 !README.md
