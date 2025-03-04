@@ -3,6 +3,7 @@ const Args = @import("./Args.zig");
 const Context = @import("./Context.zig");
 const Host = @import("./Host.zig");
 const TTY = @import("./TTY.zig");
+const Prop = @import("./prop.zig").Prop;
 const assert = std.debug.assert;
 
 const default_columns: usize = 80;
@@ -31,18 +32,17 @@ pub fn main() !void {
 
     var context = Context.init(allocator, std.fs.cwd());
     defer context.deinit();
-    try context.scanAll();
+    try context.scan();
 
     var host = Host{};
 
-    try tty.write("\n");
-    try tty.color(.dim);
-    try tty.print("{s}", .{host.user()});
-    try tty.color(.reset);
-    try tty.color(.green);
-    try tty.print("@{s}", .{try host.name()});
-    try tty.color(.reset);
-    try tty.print(" {s}", .{host.emoji()});
+    tty.write("\n");
+    tty.ansi(&.{.dim});
+    tty.print("{s}", .{host.user()});
+    tty.ansi(&.{ .reset, .green });
+    tty.print("@{s}", .{try host.name()});
+    tty.ansi(&.{.reset});
+    tty.print(" {s}", .{host.emoji()});
 
     try context.print(&tty);
 
@@ -57,21 +57,20 @@ pub fn main() !void {
             cwd_home = true;
         }
     }
-    try tty.color(.dim);
-    try tty.write(" ");
-    if (cwd_home) try tty.write("~");
+    tty.ansi(&.{.dim});
+    tty.write(" ");
+    if (cwd_home) tty.write("~");
     if (cwd.len < tty.remaining()) {
-        try tty.print("{s}", .{cwd});
+        tty.print("{s}", .{cwd});
     } else if (tty.remaining() > 10) {
-        try tty.print("{s}…", .{cwd[0 .. tty.remaining() - 1]});
+        tty.print("{s}…", .{cwd[0 .. tty.remaining() - 1]});
     }
-    try tty.color(.reset);
+    tty.ansi(&.{.reset});
 
     // New line for input command
-    try tty.color(.cyan);
-    try tty.color(.bold);
-    try tty.write("\n");
-    if (host.ssh()) try tty.write("SSH ");
-    try tty.print("→ ", .{});
-    try tty.color(.reset);
+    tty.ansi(&.{ .cyan, .bold });
+    tty.write("\n");
+    if (host.ssh()) tty.write("SSH ");
+    tty.print("→ ", .{});
+    tty.ansi(&.{.reset});
 }

@@ -3,30 +3,30 @@ const builtin = @import("builtin");
 const mem = std.mem;
 const posix = std.posix;
 
-const Host = @This();
+const Self = @This();
 
 hostname_buffer: [std.posix.HOST_NAME_MAX]u8 = [_]u8{0} ** std.posix.HOST_NAME_MAX,
 
 /// Returns the logged in username
-pub fn user(_: Host) []const u8 {
+pub fn user(_: Self) []const u8 {
     const maybe = posix.getenv("USER");
     return if (maybe) |string| string else "user";
 }
 
 /// Returns the user home directory
-pub fn home(_: Host) ?[]const u8 {
+pub fn home(_: Self) ?[]const u8 {
     const maybe = posix.getenv("HOME");
     return if (maybe) |string| string else null;
 }
 
 /// Returns `true` for remote sessions
-pub fn ssh(_: Host) bool {
+pub fn ssh(_: Self) bool {
     const maybe = posix.getenv("SSH_CONNECTION");
     return if (maybe) |_| true else false;
 }
 
 /// Returns the system hostname
-pub fn name(self: *Host) ![]const u8 {
+pub fn name(self: *Self) ![]const u8 {
     const hostname = try posix.gethostname(&self.hostname_buffer);
     if (mem.indexOfScalar(u8, hostname, '.')) |i| {
         return hostname[0..i];
@@ -35,7 +35,7 @@ pub fn name(self: *Host) ![]const u8 {
 }
 
 /// Returns the device model
-pub fn model(_: Host) ?[]const u8 {
+pub fn model(_: Self) ?[]const u8 {
     const file = std.fs.openFileAbsolute(
         "/sys/firmware/devicetree/base/model",
         .{ .mode = .read_only },
@@ -46,7 +46,7 @@ pub fn model(_: Host) ?[]const u8 {
 }
 
 /// Returns an OS emoji
-pub fn emoji(self: Host) []const u8 {
+pub fn emoji(self: Self) []const u8 {
     return switch (builtin.os.tag) {
         .macos => "",
         .linux => emoji: {

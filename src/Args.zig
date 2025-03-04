@@ -15,16 +15,27 @@ pub const Value = union(Tag) {
     string: []const u8,
 };
 
-const Args = @This();
+const Self = @This();
 
 allocator: Allocator,
 items: StringHashMap(Value),
 
-pub fn init(allocator: Allocator) !Args {
-    var args = Args{
+pub fn init(allocator: Allocator) !Self {
+    var args = Self{
         .allocator = allocator,
         .items = StringHashMap(Value).init(allocator),
     };
+    try args.processArgs();
+    return args;
+}
+
+pub fn deinit(self: *Self) void {
+    var keys = self.items.keyIterator();
+    while (keys.next()) |k| self.allocator.free(k.*);
+    self.items.deinit();
+}
+
+fn processArgs(self: *Self) !void {
     var iter = std.process.args();
     while (iter.next()) |arg| {
         var key: []const u8 = arg;
@@ -52,16 +63,9 @@ pub fn init(allocator: Allocator) !Args {
                 value = .{ .int = try std.fmt.parseInt(usize, value.string, 10) };
             }
         }
-        try args.items.put(
-            try allocator.dupe(u8, key),
+        try self.items.put(
+            try self.allocator.dupe(u8, key),
             value,
         );
     }
-    return args;
-}
-
-pub fn deinit(self: *Args) void {
-    var keys = self.items.keyIterator();
-    while (keys.next()) |k| self.allocator.free(k.*);
-    self.items.deinit();
 }
