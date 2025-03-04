@@ -13,6 +13,12 @@ pub fn user(_: Host) []const u8 {
     return if (maybe) |string| string else "user";
 }
 
+/// Returns the user home directory
+pub fn home(_: Host) ?[]const u8 {
+    const maybe = posix.getenv("HOME");
+    return if (maybe) |string| string else null;
+}
+
 /// Returns `true` for remote sessions
 pub fn ssh(_: Host) bool {
     const maybe = posix.getenv("SSH_CONNECTION");

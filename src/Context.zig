@@ -85,6 +85,7 @@ const Context = @This();
 allocator: Allocator,
 cwd: Dir,
 props: AutoHashMap(Prop, void),
+project: ?[]const u8 = null,
 
 pub fn init(allocator: Allocator, cwd: Dir) Context {
     return Context{
@@ -95,6 +96,7 @@ pub fn init(allocator: Allocator, cwd: Dir) Context {
 }
 
 pub fn deinit(self: *Context) void {
+    if (self.project) |p| self.allocator.free(p);
     self.props.deinit();
 }
 
@@ -104,12 +106,18 @@ pub fn is(self: Context, prop: Prop) bool {
 
 /// Write formatted prompt line
 pub fn print(self: Context, tty: *TTY) !void {
+    if (self.project) |p| {
+        try tty.color(.reset);
+        try tty.print(" | ", .{});
+        try tty.color(.cyan);
+        try tty.color(.bold);
+        try tty.print("{s}", .{p});
+    }
     inline for (std.meta.fields(Prop)) |field| {
         try tty.color(.reset);
         const prop: Prop = @enumFromInt(field.value);
         if (self.props.contains(prop)) {
             if (prop != .git) {
-                try tty.color(.white);
                 try tty.write(" | ");
                 try tty.color(.yellow);
                 try tty.write(prop.symbol());
@@ -126,7 +134,7 @@ pub fn print(self: Context, tty: *TTY) !void {
         if (self.gitBranch()) |branch| {
             const dirty = self.gitDirty();
             defer self.allocator.free(branch);
-            try tty.color(.white);
+            try tty.color(.reset);
             try tty.write(" on ");
             try tty.color(if (dirty) .red else .magenta);
             try tty.color(.bold);
@@ -138,6 +146,11 @@ pub fn print(self: Context, tty: *TTY) !void {
         }
     }
     try tty.color(.reset);
+}
+
+pub fn setProject(self: *Context, name: []const u8) void {
+    if (self.project) |p| self.allocator.free(p);
+    self.project = self.allocator.dupe(u8, name) catch null;
 }
 
 pub fn gitBranch(self: Context) ?[]const u8 {
@@ -176,13 +189,14 @@ pub fn scanAll(self: *Context) !void {
     var depth: usize = 0;
     while (true) : (depth += 1) {
         if (depth == max_scan_depth) break;
-        self.scanDirectory(&dir);
+        const path = try dir.realpathAlloc(self.allocator, ".");
+        defer self.allocator.free(path);
+        self.scanDirectory(&dir, std.fs.path.basename(path));
         const parent = try dir.openDir("../", .{ .iterate = true });
         dir.close();
         dir = parent;
         // Exit once root is reached
-        const path = try dir.realpathAlloc(self.allocator, ".");
-        defer self.allocator.free(path);
+
         if (eql(u8, path, "/")) break;
     }
     // Remove Node.js false positive
@@ -194,18 +208,19 @@ pub fn scanAll(self: *Context) !void {
 }
 
 /// Check all entries inside the open directory
-pub fn scanDirectory(self: *Context, open_dir: *Dir) void {
-    var iter = open_dir.iterate();
+pub fn scanDirectory(self: *Context, dir: *Dir, dir_name: []const u8) void {
+    var iter = dir.iterate();
     while (iter.next()) |next| {
-        if (next) |entry| self.scanEntry(entry) else break;
+        if (next) |entry| self.scanEntry(entry, dir_name) else break;
     } else |_| return;
 }
 
 /// Check an individual directory entry
-pub fn scanEntry(self: *Context, entry: Dir.Entry) void {
+pub fn scanEntry(self: *Context, entry: Dir.Entry, dir_name: []const u8) void {
     const result: ?Prop = switch (entry.kind) {
         .directory => result: {
             if (eql(u8, entry.name, ".git")) {
+                self.setProject(dir_name);
                 break :result .git;
             } else if (eql(u8, entry.name, "node_modules")) {
                 break :result .node;

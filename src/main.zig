@@ -49,12 +49,21 @@ pub fn main() !void {
     // Use remaining space for current path
     const path = try std.fs.cwd().realpathAlloc(allocator, ".");
     defer allocator.free(path);
+    var cwd: []const u8 = path;
+    var cwd_home = false;
+    if (host.home()) |home| {
+        if (std.mem.startsWith(u8, path, home)) {
+            cwd = path[home.len..];
+            cwd_home = true;
+        }
+    }
     try tty.color(.dim);
     try tty.write(" ");
-    if (path.len < tty.remaining()) {
-        try tty.print("{s}", .{path});
+    if (cwd_home) try tty.write("~");
+    if (cwd.len < tty.remaining()) {
+        try tty.print("{s}", .{cwd});
     } else if (tty.remaining() > 10) {
-        try tty.print("{s}…", .{path[0 .. tty.remaining() - 1]});
+        try tty.print("{s}…", .{cwd[0 .. tty.remaining() - 1]});
     }
     try tty.color(.reset);
 
