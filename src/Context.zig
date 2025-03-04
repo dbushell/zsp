@@ -45,18 +45,16 @@ pub fn print(self: Self, tty: *TTY) !void {
     }
     inline for (std.meta.fields(Prop)) |field| {
         const prop: Prop = @enumFromInt(field.value);
-        if (self.props.contains(prop)) {
-            if (prop != .git) {
-                tty.ansi(&.{.reset});
-                tty.write(" | ");
-                tty.ansi(&.{.yellow});
-                tty.write(prop.symbol());
-                const version = prop.version(self.allocator);
-                if (version) |string| {
-                    defer self.allocator.free(string);
-                    tty.write(" ");
-                    tty.write(prop.versionFormat(string));
-                }
+        if (self.props.contains(prop) and prop != .git) {
+            tty.ansi(&.{.reset});
+            tty.write(" | ");
+            tty.ansi(&.{.yellow});
+            tty.write(prop.symbol());
+            const version = prop.version(self.allocator);
+            if (version) |string| {
+                defer self.allocator.free(string);
+                tty.write(" ");
+                tty.write(prop.versionFormat(string));
             }
         }
     }
