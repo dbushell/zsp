@@ -69,7 +69,6 @@ pub fn print(self: Self, tty: *TTY) !void {
             } else {
                 tty.ansi(&.{ .magenta, .bold });
             }
-            tty.ansi(&.{.bold});
             tty.print("{s} {s}{s}", .{
                 Prop.git.symbol(),
                 std.mem.trimRight(u8, branch, " \n"),
