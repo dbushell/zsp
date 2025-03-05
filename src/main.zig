@@ -48,10 +48,8 @@ pub fn main() !void {
     if (args.items.get("duration")) |duration| {
         if (duration == .int and duration.int >= 100) {
             tty.ansi(&.{.reset});
-            tty.write(" | ");
-            // const delta: i64 = std.time.milliTimestamp() - @as(i64, @intCast(duration.int));
             const time = std.fmt.fmtDuration(@intCast(std.time.ns_per_ms * duration.int));
-            tty.print("{d}", .{time});
+            tty.print(" | {d}", .{time});
         }
     }
 
