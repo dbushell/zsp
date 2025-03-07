@@ -23,7 +23,7 @@ items: StringHashMap(Value),
 pub fn init(allocator: Allocator) !Self {
     var args = Self{
         .allocator = allocator,
-        .items = StringHashMap(Value).init(allocator),
+        .items = .init(allocator),
     };
     try args.processArgs();
     return args;

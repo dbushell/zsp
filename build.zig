@@ -8,19 +8,22 @@ const targets: []const std.Target.Query = &.{
 
 pub fn build(b: *std.Build) !void {
     for (targets) |t| {
-        const exe = b.addExecutable(.{
-            .name = "zigbar",
+        const mod = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = b.resolveTargetQuery(t),
             .optimize = .ReleaseFast,
         });
-        const target_output = b.addInstallArtifact(exe, .{
+        const exe = b.addExecutable(.{
+            .name = "zigbar",
+            .root_module = mod,
+        });
+        const out = b.addInstallArtifact(exe, .{
             .dest_dir = .{
                 .override = .{
                     .custom = try t.zigTriple(b.allocator),
                 },
             },
         });
-        b.getInstallStep().dependOn(&target_output.step);
+        b.getInstallStep().dependOn(&out.step);
     }
 }

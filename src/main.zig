@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const Args = @import("./Args.zig");
 const Context = @import("./Context.zig");
 const Host = @import("./Host.zig");
@@ -9,22 +10,22 @@ const assert = std.debug.assert;
 const default_columns: usize = 80;
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer assert(gpa.deinit() == .ok);
-    const allocator = gpa.allocator();
+    var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
+    const allocator, const is_debug = a: {
+        break :a switch (builtin.mode) {
+            .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
+            .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
+        };
+    };
+    defer if (is_debug) {
+        _ = debug_allocator.deinit();
+    };
 
-    // const gpa_allocator = gpa.allocator();
-    // var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    // var arena = std.heap.ArenaAllocator.init(gpa_allocator);
-    // defer arena.deinit();
-    // const allocator = arena.allocator();
-
-    var args = try Args.init(allocator);
+    var args: Args = try .init(allocator);
     defer args.deinit();
-
     if (!args.items.contains("prompt")) return;
 
-    var context = Context.init(allocator, std.fs.cwd());
+    var context: Context = .init(allocator, std.fs.cwd());
     defer context.deinit();
     try context.scan();
 
@@ -32,9 +33,9 @@ pub fn main() !void {
         break :value entry.int;
     } else default_columns;
 
-    var tty = TTY.init(columns);
+    var tty: TTY = .init(columns);
 
-    var host = Host{};
+    var host: Host = .{};
 
     tty.write("\n");
     tty.ansi(&.{.dim});

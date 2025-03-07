@@ -22,7 +22,7 @@ pub fn init(allocator: Allocator, cwd: Dir) Self {
     return Self{
         .allocator = allocator,
         .cwd = cwd,
-        .props = AutoHashMap(Prop, void).init(allocator),
+        .props = .init(allocator),
     };
 }
 
