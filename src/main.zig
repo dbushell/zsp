@@ -58,18 +58,17 @@ pub fn main() !void {
     try context.print(&tty);
 
     // Use remaining space for current path
-    const path = try std.fs.cwd().realpathAlloc(allocator, ".");
-    defer allocator.free(path);
-    var cwd: []const u8 = path;
+    var cwd = context.cwd_path orelse "/";
     var cwd_home = false;
     if (host.home()) |home| {
-        if (std.mem.startsWith(u8, path, home)) {
-            cwd = path[home.len..];
+        if (std.mem.startsWith(u8, cwd, home)) {
+            cwd = cwd[home.len..];
             cwd_home = true;
         }
     }
     tty.ansi(&.{ .reset, .dim });
     tty.write(" ");
+    if (context.cwd_readonly) tty.write("🔒");
     if (cwd_home) tty.write("~");
     if (cwd.len < tty.remaining()) {
         tty.print("{s}", .{cwd});

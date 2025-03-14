@@ -14,11 +14,16 @@ const max_scan_depth = 5;
 const Self = @This();
 
 allocator: Allocator,
-cwd: Dir,
 git: Git,
 props: AutoHashMap(Prop, void),
 // Current git repo directory name
 repo: ?[]const u8 = null,
+/// Current directory
+cwd: Dir,
+/// Current directory path
+cwd_path: ?[]const u8 = null,
+/// Current directory is readonly
+cwd_readonly: bool = false,
 
 pub fn init(allocator: Allocator, cwd: Dir) Self {
     return Self{
@@ -31,6 +36,7 @@ pub fn init(allocator: Allocator, cwd: Dir) Self {
 
 pub fn deinit(self: *Self) void {
     if (self.repo) |p| self.allocator.free(p);
+    if (self.cwd_path) |p| self.allocator.free(p);
     self.props.deinit();
     self.git.deinit();
     self.* = undefined;
@@ -90,6 +96,12 @@ pub fn print(self: Self, tty: *TTY) !void {
 pub fn scan(self: *Self) !void {
     var dir = try self.cwd.openDir(".", .{ .iterate = true });
     defer dir.close();
+    self.cwd_path = try dir.realpathAlloc(self.allocator, ".");
+    if (dir.access(".", .{ .mode = .read_write })) {
+        self.cwd_readonly = false;
+    } else |_| {
+        self.cwd_readonly = true;
+    }
     var depth: usize = 0;
     while (true) : (depth += 1) {
         if (depth == max_scan_depth) break;
