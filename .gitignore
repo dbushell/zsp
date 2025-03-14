@@ -5,6 +5,7 @@ zig-out
 !init.sh
 !.github
 !.github/screenshot.avif
+!.github/workflows/*.yml
 !.gitignore
 !LICENSE
 !README.md

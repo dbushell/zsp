@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.14.0
+
+      - name: Build
+        run: |
+          zig build --summary all
+          cd zig-out/aarch64-macos/
+          tar -cvzf ../zigbar-aarch64-macos.tar.gz zigbar
+          cd -
+          cd zig-out/aarch64-linux/
+          tar -cvzf ../zigbar-aarch64-linux.tar.gz zigbar
+          cd -
+          cd zig-out/x86_64-linux/
+          tar -cvzf ../zigbar-x86_64-linux.tar.gz zigbar
+          cd -
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          path: ./zig-out/*.tar.gz
+
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          artifacts: ./zig-out/*.tar.gz
