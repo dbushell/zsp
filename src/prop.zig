@@ -15,14 +15,14 @@ pub const Prop = enum {
     /// Nerd font unicode characters
     pub fn symbol(prop: Prop) []const u8 {
         return switch (prop) {
-            .bun => "",
-            .deno => "",
-            .docker => "󰡨",
+            .bun => "🍞",
+            .deno => "🦕",
+            .docker => "🐳",
             .git => "",
-            .node => "󰎙",
-            .php => "",
-            .rust => "󱘗",
-            .zig => "",
+            .node => "⬡",
+            .php => "🐘",
+            .rust => "🦀",
+            .zig => "⚡",
         };
     }
 

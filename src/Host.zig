@@ -48,13 +48,14 @@ pub fn model(_: Self) ?[]const u8 {
 /// Returns an OS emoji
 pub fn emoji(self: Self) []const u8 {
     return switch (builtin.os.tag) {
-        .macos => "",
+        .macos => "🍏",
         .linux => emoji: {
             if (self.model()) |string| {
-                if (mem.indexOf(u8, string, "Raspberry Pi")) |_| break :emoji "";
+                if (mem.containsAtLeast(u8, string, 1, "Raspberry Pi"))
+                    break :emoji "🍓";
             }
-            break :emoji "";
+            break :emoji "🌶️";
         },
-        else => "󱁣",
+        else => "🍌",
     };
 }
