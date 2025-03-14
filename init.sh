@@ -37,4 +37,4 @@ add-zsh-hook preexec prompt_zigbar_preexec
 
 setopt promptsubst
 
-PROMPT='$('${0:a:h}'/zig-out/aarch64-macos/zigbar prompt --columns="$COLUMNS" --duration="${ZIGBAR_DURATION:-}")'
+PROMPT='$(zigbar prompt --columns="$COLUMNS" --duration="${ZIGBAR_DURATION:-}")'
