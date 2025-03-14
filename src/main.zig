@@ -28,6 +28,7 @@ pub fn main() !void {
     var context: Context = .init(allocator, std.fs.cwd());
     defer context.deinit();
     try context.scan();
+    try context.git.update();
 
     const columns: usize = if (args.items.get("columns")) |entry| value: {
         break :value entry.int;

@@ -38,6 +38,7 @@ pub fn deinit(self: *Self) void {
         self.allocator.free(entry.key_ptr.*);
     }
     self.items.deinit();
+    self.* = undefined;
 }
 
 fn processArgs(self: *Self) !void {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const Git = @import("./Git.zig");
 const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
 const Allocator = std.mem.Allocator;
@@ -14,6 +15,7 @@ const Self = @This();
 
 allocator: Allocator,
 cwd: Dir,
+git: Git,
 props: AutoHashMap(Prop, void),
 // Current git repo directory name
 repo: ?[]const u8 = null,
@@ -22,6 +24,7 @@ pub fn init(allocator: Allocator, cwd: Dir) Self {
     return Self{
         .allocator = allocator,
         .cwd = cwd,
+        .git = .init(allocator),
         .props = .init(allocator),
     };
 }
@@ -29,6 +32,8 @@ pub fn init(allocator: Allocator, cwd: Dir) Self {
 pub fn deinit(self: *Self) void {
     if (self.repo) |p| self.allocator.free(p);
     self.props.deinit();
+    self.git.deinit();
+    self.* = undefined;
 }
 
 pub fn is(self: Self, prop: Prop) bool {
@@ -59,22 +64,24 @@ pub fn print(self: Self, tty: *TTY) !void {
         }
     }
     if (self.is(.git)) {
-        if (self.gitBranch()) |branch| {
-            const dirty = self.gitDirty();
-            defer self.allocator.free(branch);
-            tty.ansi(&.{.reset});
-            tty.write(" on ");
-            if (dirty) {
-                tty.ansi(&.{ .red, .bold });
-            } else {
-                tty.ansi(&.{ .magenta, .bold });
-            }
-            tty.print("{s} {s}{s}", .{
-                Prop.git.symbol(),
-                std.mem.trimRight(u8, branch, " \n"),
-                if (dirty) "*" else "",
-            });
+        tty.ansi(&.{.reset});
+        tty.write(" on ");
+        if (self.git.state == .dirty) {
+            tty.ansi(&.{ .red, .bold });
+        } else {
+            tty.ansi(&.{ .magenta, .bold });
         }
+        tty.print("{s}{s} {s}{s}", .{
+            Prop.git.symbol(),
+            switch (self.git.stature) {
+                .ahead => "↑",
+                .behind => "↓",
+                .diverged => "‼",
+                else => "",
+            },
+            self.git.branch,
+            if (self.git.state == .dirty) "*" else "",
+        });
     }
     tty.ansi(&.{.reset});
 }
@@ -162,33 +169,4 @@ fn scanEntry(self: *Self, entry: Dir.Entry, dir_name: []const u8) void {
     if (result) |prop| {
         self.props.put(prop, {}) catch unreachable;
     }
-}
-
-fn gitBranch(self: Self) ?[]const u8 {
-    if (!self.is(.git)) return null;
-    const result = std.process.Child.run(.{
-        .allocator = self.allocator,
-        .argv = &.{ "git", "branch", "--show-current" },
-    }) catch return null;
-    if (result.term == .Exited) {
-        self.allocator.free(result.stderr);
-        return result.stdout;
-    }
-    self.allocator.free(result.stderr);
-    self.allocator.free(result.stdout);
-    return null;
-}
-
-fn gitDirty(self: Self) bool {
-    if (!self.is(.git)) return false;
-    const result = std.process.Child.run(.{
-        .allocator = self.allocator,
-        .argv = &.{ "git", "diff", "--no-ext-diff", "--quiet", "--exit-code" },
-    }) catch return false;
-    self.allocator.free(result.stderr);
-    self.allocator.free(result.stdout);
-    return switch (result.term) {
-        .Exited => |code| (code == 1),
-        else => false,
-    };
 }
