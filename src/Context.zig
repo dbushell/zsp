@@ -56,7 +56,7 @@ pub fn print(self: Self, tty: *TTY) !void {
     }
     inline for (std.meta.fields(Prop)) |field| {
         const prop: Prop = @enumFromInt(field.value);
-        if (self.props.contains(prop) and prop != .git) {
+        if (self.is(prop) and prop != .git) {
             tty.ansi(&.{.reset});
             tty.write(" | ");
             tty.ansi(&.{.yellow});

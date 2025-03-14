@@ -8,7 +8,7 @@ config: std.io.tty.Config,
 /// Current ANSI style
 color: Color = undefined,
 /// Maximum prompt columns (visible utf8 characters)
-utf8_max_len: usize = undefined,
+utf8_max_len: usize,
 /// Current prompt written (visible utf8 characters)
 utf8_len: usize = 0,
 
