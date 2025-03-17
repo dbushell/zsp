@@ -31,6 +31,8 @@ jobs:
           echo "${MINISIGN_SECRET_KEY}" > minisign.key
           zig build -Doptimize=ReleaseFast --summary all
           rm -f minisign.key
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
