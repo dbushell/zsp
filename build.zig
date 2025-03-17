@@ -60,9 +60,9 @@ pub fn build(b: *std.Build) !void {
         // Sign archive file
         const sign_name = try std.mem.concat(b.allocator, u8, &.{ tar_name, ".minisig" });
         const sign = b.addSystemCommand(&.{"minisign"});
-        sign.setCwd(exe_dir);
-        sign.addArgs(&.{ "-Sm", tar_name, "-x", sign_name, "-s" });
-        sign.addFileArg(b.path("minisign.key"));
+        sign.addPrefixedFileArg("-Sm", exe_dir.path(b, tar_name));
+        sign.addPrefixedFileArg("-x", exe_dir.path(b, sign_name));
+        sign.addPrefixedFileArg("-s", b.path("minisign.key"));
         sign.step.dependOn(&tar.step);
 
         const install_tar = b.addInstallFile(
