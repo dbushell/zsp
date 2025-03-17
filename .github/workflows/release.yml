@@ -39,12 +39,12 @@ jobs:
         with:
           if-no-files-found: error
           path: |
-            ./zig-out/*.tar.gz
-            ./zig-out/*.tar.gz.minisig
+            ./zig-out/**/*.tar.gz
+            ./zig-out/**/*.tar.gz.minisig
 
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          artifacts: "./zig-out/*.tar.gz,./zig-out/*.tar.gz.minisig"
+          artifacts: "./zig-out/**/*.tar.gz,./zig-out/**/*.tar.gz.minisig"
