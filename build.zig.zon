@@ -1,6 +1,6 @@
 .{
     .name = .zigbar,
-    .version = "0.3.0",
+    .version = "0.4.0",
     .fingerprint = 0xa016003a8035f03b,
     .minimum_zig_version = "0.14.0",
     .paths = .{

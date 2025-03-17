@@ -14,8 +14,6 @@ pub const UpdateError = error{
     SigError,
 };
 
-const minisign_public_key = "RWRdnhTwGE7SUzRJwb+f48phQN3hyxCfOXXpOBBFq9L1BwFU51JlXly2";
-
 pub const build_name: []const u8 = config.name;
 pub const build_triple: []const u8 = config.triple;
 pub const build_version: Version = config.version;
@@ -138,7 +136,7 @@ fn validateSignature(allocator: Allocator) !void {
     try fs.accessAbsolute(sig_path, .{ .mode = .read_only });
     const file = try fs.openFileAbsolute(tar_path, .{ .mode = .read_only });
     defer file.close();
-    const pubkey = try minizign.PublicKey.decodeFromBase64(minisign_public_key);
+    const pubkey = try minizign.PublicKey.decodeFromBase64(config.minisign_public_key);
     var signature = try minizign.Signature.fromFile(allocator, sig_path);
     defer signature.deinit();
     try pubkey.verifyFile(allocator, file, signature, false);
