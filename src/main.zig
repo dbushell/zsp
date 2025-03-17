@@ -60,11 +60,12 @@ pub fn main() !void {
             }
         } else |err| {
             const reason = switch (err) {
-                error.AllocError => "out of memory",
-                error.HttpError => "server unreachable",
-                error.ParseError => "bad response from server",
-                error.SigError => "invalid signature",
-                error.FileError => "file permissions",
+                error.ApiError => "API not responding",
+                error.DownloadError => "error downloading files",
+                error.FileError => "error writing temporary files",
+                error.ParseError => "could not parse API response",
+                error.SigError => "invalid tarball signature",
+                error.InstallError => "error installing binary (sudo required?)",
             };
             tty.print("Update failed: {s}\n", .{reason});
         }

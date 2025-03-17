@@ -7,11 +7,12 @@ const Version = std.SemanticVersion;
 const fs = std.fs;
 
 pub const UpdateError = error{
-    AllocError,
-    HttpError,
+    ApiError,
+    DownloadError,
     FileError,
     ParseError,
     SigError,
+    InstallError,
 };
 
 pub const build_name: []const u8 = config.name;
@@ -57,12 +58,12 @@ pub fn download(allocator: Allocator, options: UpdateOptions) UpdateError!Versio
             "X-GitHub-Api-Version: 2022-11-28",
             "https://api.github.com/repos/dbushell/zigbar/releases",
         },
-    }) catch return error.HttpError;
+    }) catch return error.ApiError;
     defer {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term != .Exited) return error.HttpError;
+    if (result.term != .Exited) return error.ApiError;
 
     // Parse JSON body
     var releases = std.json.parseFromSlice(
@@ -100,12 +101,12 @@ pub fn download(allocator: Allocator, options: UpdateOptions) UpdateError!Versio
         fs.deleteDirAbsolute(tmp_path) catch {};
     }
     for (latest.?.assets) |asset| {
-        downloadFile(allocator, asset.browser_download_url) catch return error.HttpError;
+        downloadFile(allocator, asset.browser_download_url) catch return error.DownloadError;
     }
     // Check archive was downloaded
     fs.accessAbsolute(tar_path, .{ .mode = .read_only }) catch return error.FileError;
     validateSignature(allocator) catch return error.SigError;
-    installBinary(allocator, dir) catch return error.FileError;
+    installBinary(allocator, dir) catch return error.InstallError;
     return latest.?.version.?;
 }
 
@@ -129,7 +130,7 @@ fn downloadFile(allocator: Allocator, url: []const u8) !void {
     });
     allocator.free(result.stderr);
     allocator.free(result.stdout);
-    if (result.term != .Exited) return error.HttpError;
+    if (result.term != .Exited) return error.DownloadError;
 }
 
 fn validateSignature(allocator: Allocator) !void {
@@ -151,7 +152,7 @@ fn installBinary(allocator: Allocator, dir: fs.Dir) !void {
     });
     allocator.free(result.stderr);
     allocator.free(result.stdout);
-    if (result.term != .Exited) return error.FileError;
+    if (result.term != .Exited) return error.InstallError;
     // Replace existing binary
     const exe_path = try fs.selfExePathAlloc(allocator);
     defer allocator.free(exe_path);
