@@ -3,7 +3,7 @@ const Git = @import("./Git.zig");
 const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
 const Allocator = std.mem.Allocator;
-const AutoHashMap = std.AutoHashMap;
+const AutoHashMap = std.AutoHashMapUnmanaged;
 const Dir = std.fs.Dir;
 const eql = std.mem.eql;
 const extension = std.fs.path.extension;
@@ -30,14 +30,14 @@ pub fn init(allocator: Allocator, cwd: Dir) Self {
         .allocator = allocator,
         .cwd = cwd,
         .git = .init(allocator),
-        .props = .init(allocator),
+        .props = .empty,
     };
 }
 
 pub fn deinit(self: *Self) void {
     if (self.repo) |p| self.allocator.free(p);
     if (self.cwd_path) |p| self.allocator.free(p);
-    self.props.deinit();
+    self.props.deinit(self.allocator);
     self.git.deinit();
     self.* = undefined;
 }
@@ -179,6 +179,6 @@ fn scanEntry(self: *Self, entry: Dir.Entry, dir_name: []const u8) void {
         else => null,
     };
     if (result) |prop| {
-        self.props.put(prop, {}) catch unreachable;
+        self.props.put(self.allocator, prop, {}) catch unreachable;
     }
 }

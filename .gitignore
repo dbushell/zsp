@@ -3,6 +3,8 @@ zig-out
 **/*.*
 !**/*.zig
 !init.sh
+!build.zig
+!build.zig.zon
 !.github
 !.github/screenshot.avif
 !.github/workflows/*.yml

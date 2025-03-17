@@ -20,28 +20,29 @@ jobs:
         with:
           version: 0.14.0
 
-      - name: Build
+      - name: Install minisign
         run: |
-          zig build --summary all
-          cd zig-out/aarch64-macos/
-          tar -cvzf ../zigbar-aarch64-macos.tar.gz zigbar
-          cd -
-          cd zig-out/aarch64-linux/
-          tar -cvzf ../zigbar-aarch64-linux.tar.gz zigbar
-          cd -
-          cd zig-out/x86_64-linux/
-          tar -cvzf ../zigbar-x86_64-linux.tar.gz zigbar
-          cd -
+          wget https://github.com/jedisct1/minisign/releases/download/0.12/minisign-0.12-linux.tar.gz
+          tar -xf minisign-0.12-linux.tar.gz --directory ${HOME}
+          echo "${HOME}/minisign-linux/x86_64/" >> $GITHUB_PATH
 
-      - name: Upload
+      - name: Build and sign
+        run: |
+          echo "${MINISIGN_SECRET_KEY}" > minisign.key
+          zig build -Doptimize=ReleaseFast --summary all
+          rm -f minisign.key
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          path: ./zig-out/*.tar.gz
+          path: |
+            ./zig-out/*.tar.gz
+            ./zig-out/*.tar.gz.minisig
 
-      - name: Release
+      - name: Publish release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          artifacts: ./zig-out/*.tar.gz
+          artifacts: "./zig-out/*.tar.gz,./zig-out/*.tar.gz.minisig"

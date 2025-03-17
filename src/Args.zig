@@ -1,7 +1,7 @@
 const std = @import("std");
 const mem = std.mem;
 const Allocator = std.mem.Allocator;
-const StringHashMap = std.StringHashMap;
+const StringHashMap = std.StringHashMapUnmanaged;
 
 pub const Tag = enum {
     bool,
@@ -23,7 +23,7 @@ items: StringHashMap(Value),
 pub fn init(allocator: Allocator) !Self {
     var args = Self{
         .allocator = allocator,
-        .items = .init(allocator),
+        .items = .empty,
     };
     try args.processArgs();
     return args;
@@ -37,7 +37,7 @@ pub fn deinit(self: *Self) void {
         }
         self.allocator.free(entry.key_ptr.*);
     }
-    self.items.deinit();
+    self.items.deinit(self.allocator);
     self.* = undefined;
 }
 
@@ -73,6 +73,7 @@ fn processArgs(self: *Self) !void {
             value.string = try self.allocator.dupe(u8, value.string);
         }
         try self.items.put(
+            self.allocator,
             try self.allocator.dupe(u8, key),
             value,
         );

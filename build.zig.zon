@@ -1,0 +1,19 @@
+.{
+    .name = .zigbar,
+    .version = "0.3.0",
+    .fingerprint = 0xa016003a8035f03b,
+    .minimum_zig_version = "0.14.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+    .dependencies = .{
+        .minizign = .{
+            .url = "git+https://github.com/jedisct1/zig-minisign.git#4030f154ba0cd29910bec4e809955e730d8f0ed7",
+            .hash = "minizign-0.1.6-gg18cfnZAQA1H3RszTLT98sFBL8p6wq1Zq_5ruwp9QPx",
+        },
+    },
+}

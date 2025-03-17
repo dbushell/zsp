@@ -1,18 +1,18 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const update = @import("./update.zig");
 const Args = @import("./Args.zig");
 const Context = @import("./Context.zig");
 const Host = @import("./Host.zig");
 const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
-const assert = std.debug.assert;
 
 const default_columns: usize = 80;
 
 pub fn main() !void {
     var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
-    const allocator, const is_debug = a: {
-        break :a switch (builtin.mode) {
+    const allocator, const is_debug = alloc: {
+        break :alloc switch (builtin.mode) {
             .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
             .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
         };
@@ -23,18 +23,60 @@ pub fn main() !void {
 
     var args: Args = try .init(allocator);
     defer args.deinit();
-    if (!args.items.contains("prompt")) return;
-
-    var context: Context = .init(allocator, std.fs.cwd());
-    defer context.deinit();
-    try context.scan();
-    try context.git.update();
 
     const columns: usize = if (args.items.get("columns")) |entry| value: {
         break :value entry.int;
     } else default_columns;
 
     var tty: TTY = .init(columns);
+
+    // Version commands
+    if (args.items.contains("-v")) {
+        tty.print("{}\n", .{update.build_version});
+        return;
+    }
+    if (args.items.contains("version")) {
+        tty.print("zigbar {} ({s})\n", .{
+            update.build_version,
+            update.build_triple,
+        });
+        return;
+    }
+
+    // Update command
+    if (args.items.contains("update")) {
+        tty.print(
+            "Current version: {}\n",
+            .{update.build_version},
+        );
+        const options = update.UpdateOptions{
+            .force = args.items.contains("force"),
+        };
+        if (update.download(allocator, options)) |version| {
+            switch (version.order(update.build_version)) {
+                .gt => tty.print("New version: {}\n", .{version}),
+                .lt => tty.print("Old version: {}\n", .{version}),
+                .eq => tty.write("Up to date\n"),
+            }
+        } else |err| {
+            const reason = switch (err) {
+                error.AllocError => "out of memory",
+                error.HttpError => "server unreachable",
+                error.ParseError => "bad response from server",
+                error.SigError => "invalid signature",
+                error.FileError => "file permissions",
+            };
+            tty.print("Update failed: {s}\n", .{reason});
+        }
+        return;
+    }
+
+    if (!args.items.contains("prompt")) return;
+
+    var context: Context = .init(allocator, std.fs.cwd());
+    defer context.deinit();
+    try context.scan();
+    try context.git.update();
 
     var host: Host = .{};
 
