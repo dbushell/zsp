@@ -169,6 +169,8 @@ fn scanEntry(self: *Self, entry: Dir.Entry, dir_name: []const u8) void {
                 break :result .node;
             } else if (eql(u8, ext, ".php")) {
                 break :result .php;
+            } else if (eql(u8, ext, ".py")) {
+                break :result .python;
             } else if (eql(u8, ext, ".rs")) {
                 break :result .rust;
             } else if (eql(u8, ext, ".zig")) {
