@@ -29,7 +29,7 @@ jobs:
       - name: Build and sign
         run: |
           echo "${MINISIGN_SECRET_KEY}" > minisign.key
-          zig build -Doptimize=ReleaseFast --summary all
+          zig build -Doptimize=ReleaseFast -Dtarball --summary all
           rm -f minisign.key
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}

@@ -13,6 +13,12 @@ const targets: []const std.Target.Query = &.{
 pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
+    const tarball = b.option(
+        bool,
+        "tarball",
+        "Generate tarball with signature",
+    ) orelse false;
+
     for (targets) |t| {
         const triple = try t.zigTriple(b.allocator);
         const target = b.resolveTargetQuery(t);
@@ -49,36 +55,38 @@ pub fn build(b: *std.Build) !void {
         });
         b.getInstallStep().dependOn(&out.step);
 
-        // Archive executable
-        const tar_name = try std.mem.concat(b.allocator, u8, &.{ name, "-", triple, ".tar.gz" });
-        const tar = b.addSystemCommand(&.{"tar"});
-        tar.setCwd(exe_dir);
-        tar.addArgs(&.{"-czf"});
-        tar.addArg(tar_name);
-        tar.addArg(exe.out_filename);
-        tar.step.dependOn(&out.step);
+        if (tarball) {
+            // Archive executable
+            const tar_name = try std.mem.concat(b.allocator, u8, &.{ name, "-", triple, ".tar.gz" });
+            const tar = b.addSystemCommand(&.{"tar"});
+            tar.setCwd(exe_dir);
+            tar.addArgs(&.{"-czf"});
+            tar.addArg(tar_name);
+            tar.addArg(exe.out_filename);
+            tar.step.dependOn(&out.step);
 
-        // Sign archive file
-        const sign_name = try std.mem.concat(b.allocator, u8, &.{ tar_name, ".minisig" });
-        const sign = b.addSystemCommand(&.{"minisign"});
-        sign.addPrefixedFileArg("-Sm", exe_dir.path(b, tar_name));
-        sign.addPrefixedFileArg("-x", exe_dir.path(b, sign_name));
-        sign.addPrefixedFileArg("-s", b.path("minisign.key"));
-        sign.step.dependOn(&tar.step);
+            // Sign archive file
+            const sign_name = try std.mem.concat(b.allocator, u8, &.{ tar_name, ".minisig" });
+            const sign = b.addSystemCommand(&.{"minisign"});
+            sign.addPrefixedFileArg("-Sm", exe_dir.path(b, tar_name));
+            sign.addPrefixedFileArg("-x", exe_dir.path(b, sign_name));
+            sign.addPrefixedFileArg("-s", b.path("minisign.key"));
+            sign.step.dependOn(&tar.step);
 
-        const install_tar = b.addInstallFile(
-            exe_dir.path(b, tar_name),
-            b.pathJoin(&.{ triple, tar_name }),
-        );
-        install_tar.step.dependOn(&tar.step);
-        b.getInstallStep().dependOn(&install_tar.step);
+            const install_tar = b.addInstallFile(
+                exe_dir.path(b, tar_name),
+                b.pathJoin(&.{ triple, tar_name }),
+            );
+            install_tar.step.dependOn(&tar.step);
+            b.getInstallStep().dependOn(&install_tar.step);
 
-        const install_sign = b.addInstallFile(
-            exe_dir.path(b, sign_name),
-            b.pathJoin(&.{ triple, sign_name }),
-        );
-        install_sign.step.dependOn(&sign.step);
-        b.getInstallStep().dependOn(&install_sign.step);
+            const install_sign = b.addInstallFile(
+                exe_dir.path(b, sign_name),
+                b.pathJoin(&.{ triple, sign_name }),
+            );
+            install_sign.step.dependOn(&sign.step);
+            b.getInstallStep().dependOn(&install_sign.step);
+        }
 
         // Use `zig build run` for debug
         if (optimize == .Debug and t.os_tag == .macos) {
