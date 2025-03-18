@@ -6,6 +6,7 @@ const Context = @import("./Context.zig");
 const Host = @import("./Host.zig");
 const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
+const Allocator = std.mem.Allocator;
 
 const default_columns: usize = 80;
 
@@ -30,11 +31,11 @@ pub fn main() !void {
 
     var tty: TTY = .init(columns);
 
-    // Version commands
     if (args.items.contains("-v")) {
         tty.print("{}\n", .{update.build_version});
         return;
     }
+
     if (args.items.contains("version")) {
         tty.print("zigbar {} ({s})\n", .{
             update.build_version,
@@ -43,37 +44,43 @@ pub fn main() !void {
         return;
     }
 
-    // Update command
     if (args.items.contains("update")) {
-        tty.print(
-            "Current version: {}\n",
-            .{update.build_version},
-        );
-        const options = update.UpdateOptions{
-            .force = args.items.contains("force"),
-        };
-        if (update.download(allocator, options)) |version| {
-            switch (version.order(update.build_version)) {
-                .gt => tty.print("New version: {}\n", .{version}),
-                .lt => tty.print("Old version: {}\n", .{version}),
-                .eq => tty.write("Up to date\n"),
-            }
-        } else |err| {
-            const reason = switch (err) {
-                error.ApiError => "API not responding",
-                error.DownloadError => "error downloading files",
-                error.FileError => "error writing temporary files",
-                error.ParseError => "could not parse API response",
-                error.SigError => "invalid tarball signature",
-                error.InstallError => "error installing binary (sudo required?)",
-            };
-            tty.print("Update failed: {s}\n", .{reason});
-        }
-        return;
+        return updateCommand(allocator, &args, &tty);
     }
 
-    if (!args.items.contains("prompt")) return;
+    if (args.items.contains("prompt")) {
+        return promptCommand(allocator, &args, &tty);
+    }
+}
 
+fn updateCommand(allocator: Allocator, args: *Args, tty: *TTY) !void {
+    tty.print(
+        "Current version: {}\n",
+        .{update.build_version},
+    );
+    const options = update.UpdateOptions{
+        .force = args.items.contains("force"),
+    };
+    if (update.download(allocator, options)) |version| {
+        switch (version.order(update.build_version)) {
+            .gt => tty.print("New version: {}\n", .{version}),
+            .lt => tty.print("Old version: {}\n", .{version}),
+            .eq => tty.write("Up to date\n"),
+        }
+    } else |err| {
+        const reason = switch (err) {
+            error.ApiError => "API not responding",
+            error.DownloadError => "error downloading files",
+            error.FileError => "error writing temporary files",
+            error.ParseError => "could not parse API response",
+            error.SigError => "invalid tarball signature",
+            error.InstallError => "error installing binary (sudo required?)",
+        };
+        tty.print("Update failed: {s}\n", .{reason});
+    }
+}
+
+fn promptCommand(allocator: Allocator, args: *Args, tty: *TTY) !void {
     var context: Context = .init(allocator, std.fs.cwd());
     defer context.deinit();
     try context.scan();
@@ -81,6 +88,7 @@ pub fn main() !void {
 
     var host: Host = .{};
 
+    // Print "user@host [emoji]"
     tty.write("\n");
     tty.ansi(&.{.dim});
     tty.print("{s}", .{host.user()});
@@ -89,7 +97,8 @@ pub fn main() !void {
     tty.ansi(&.{.reset});
     tty.print(" {s}", .{host.emoji()});
 
-    // Last command execution time
+    // Print: " | 404ms"
+    // Last command execution time from ZSH script
     if (args.items.get("duration")) |duration| {
         if (duration == .int and duration.int >= 100) {
             tty.ansi(&.{.reset});
@@ -98,7 +107,55 @@ pub fn main() !void {
         }
     }
 
-    try context.print(&tty);
+    // Print: " | [repo]"
+    // Directory name of parent Git repository
+    if (context.repo) |repo| {
+        tty.ansi(&.{.reset});
+        tty.print(" | ", .{});
+        tty.ansi(&.{ .cyan, .bold });
+        tty.print("{s}", .{repo});
+    }
+
+    // Print: " | [emoji] 1.2.3"
+    // Version of each programming language detected
+    inline for (std.meta.fields(Prop)) |field| {
+        const prop: Prop = @enumFromInt(field.value);
+        if (context.is(prop) and prop != .git) {
+            tty.ansi(&.{.reset});
+            tty.write(" | ");
+            tty.ansi(&.{.yellow});
+            tty.write(prop.symbol());
+            const version = prop.version(context.allocator);
+            if (version) |string| {
+                defer context.allocator.free(string);
+                tty.write(" ");
+                tty.write(prop.versionFormat(string));
+            }
+        }
+    }
+
+    // Print: " on ↑ main*"
+    // Git branch and repository status
+    if (context.is(.git)) {
+        tty.ansi(&.{.reset});
+        tty.write(" on ");
+        if (context.git.state == .dirty) {
+            tty.ansi(&.{ .red, .bold });
+        } else {
+            tty.ansi(&.{ .magenta, .bold });
+        }
+        tty.print("{s}{s} {s}{s}", .{
+            Prop.git.symbol(),
+            switch (context.git.stature) {
+                .ahead => "↑",
+                .behind => "↓",
+                .diverged => "‼",
+                else => "",
+            },
+            context.git.branch,
+            if (context.git.state == .dirty) "*" else "",
+        });
+    }
 
     // Use remaining space for current path
     var cwd = context.cwd_path orelse "/";
@@ -124,5 +181,6 @@ pub fn main() !void {
     tty.write("\n");
     if (host.ssh()) tty.write("SSH ");
     tty.print("→ ", .{});
+
     tty.ansi(&.{.reset});
 }

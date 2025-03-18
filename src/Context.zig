@@ -46,52 +46,6 @@ pub fn is(self: Self, prop: Prop) bool {
     return self.props.contains(prop);
 }
 
-/// Write formatted prompt line
-pub fn print(self: Self, tty: *TTY) !void {
-    if (self.repo) |p| {
-        tty.ansi(&.{.reset});
-        tty.print(" | ", .{});
-        tty.ansi(&.{ .cyan, .bold });
-        tty.print("{s}", .{p});
-    }
-    inline for (std.meta.fields(Prop)) |field| {
-        const prop: Prop = @enumFromInt(field.value);
-        if (self.is(prop) and prop != .git) {
-            tty.ansi(&.{.reset});
-            tty.write(" | ");
-            tty.ansi(&.{.yellow});
-            tty.write(prop.symbol());
-            const version = prop.version(self.allocator);
-            if (version) |string| {
-                defer self.allocator.free(string);
-                tty.write(" ");
-                tty.write(prop.versionFormat(string));
-            }
-        }
-    }
-    if (self.is(.git)) {
-        tty.ansi(&.{.reset});
-        tty.write(" on ");
-        if (self.git.state == .dirty) {
-            tty.ansi(&.{ .red, .bold });
-        } else {
-            tty.ansi(&.{ .magenta, .bold });
-        }
-        tty.print("{s}{s} {s}{s}", .{
-            Prop.git.symbol(),
-            switch (self.git.stature) {
-                .ahead => "↑",
-                .behind => "↓",
-                .diverged => "‼",
-                else => "",
-            },
-            self.git.branch,
-            if (self.git.state == .dirty) "*" else "",
-        });
-    }
-    tty.ansi(&.{.reset});
-}
-
 /// Scan parent directories to populate context
 pub fn scan(self: *Self) !void {
     var dir = try self.cwd.openDir(".", .{ .iterate = true });
