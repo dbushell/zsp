@@ -49,6 +49,7 @@ pub fn download(allocator: Allocator, options: UpdateOptions) UpdateError!Versio
     // Rely on CURL because HTTP library is large
     const result = std.process.Child.run(.{
         .allocator = allocator,
+        .max_output_bytes = 1024 * 1024,
         .argv = &.{
             "curl",
             "-L",
