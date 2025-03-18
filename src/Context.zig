@@ -167,6 +167,8 @@ fn scanEntry(self: *Self, entry: Dir.Entry, dir_name: []const u8) void {
                 break :result .docker;
             } else if (eql(u8, entry.name, "package.json")) {
                 break :result .node;
+            } else if (eql(u8, ext, ".go")) {
+                break :result .go;
             } else if (eql(u8, ext, ".php")) {
                 break :result .php;
             } else if (eql(u8, ext, ".py")) {
