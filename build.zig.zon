@@ -1,7 +1,7 @@
 .{
-    .name = .zigbar,
-    .version = "0.6.0",
-    .fingerprint = 0xa016003a8035f03b,
+    .name = .zsp,
+    .version = "0.7.0",
+    .fingerprint = 0xf2306f9dd50373c9,
     .minimum_zig_version = "0.14.0",
     .paths = .{
         "build.zig",

@@ -14,27 +14,27 @@
 zmodload zsh/datetime
 zmodload zsh/mathfunc
 
-__zigbar_get_time() {
-  (( ZIGBAR_CAPTURED_TIME = int(rint(EPOCHREALTIME * 1000)) ))
+__zsp_get_time() {
+  (( ZSP_CAPTURED_TIME = int(rint(EPOCHREALTIME * 1000)) ))
 }
 
-prompt_zigbar_precmd() {
-  if (( ${+ZIGBAR_START_TIME} )); then
-    __zigbar_get_time && (( ZIGBAR_DURATION = ZIGBAR_CAPTURED_TIME - ZIGBAR_START_TIME ))
-    unset ZIGBAR_START_TIME
+prompt_zsp_precmd() {
+  if (( ${+ZSP_START_TIME} )); then
+    __zsp_get_time && (( ZSP_DURATION = ZSP_CAPTURED_TIME - ZSP_START_TIME ))
+    unset ZSP_START_TIME
   else
-    unset ZIGBAR_DURATION
+    unset ZSP_DURATION
   fi
 }
 
-prompt_zigbar_preexec() {
-  __zigbar_get_time && ZIGBAR_START_TIME=$ZIGBAR_CAPTURED_TIME
+prompt_zsp_preexec() {
+  __zsp_get_time && ZSP_START_TIME=$ZSP_CAPTURED_TIME
 }
 
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd prompt_zigbar_precmd
-add-zsh-hook preexec prompt_zigbar_preexec
+add-zsh-hook precmd prompt_zsp_precmd
+add-zsh-hook preexec prompt_zsp_preexec
 
 setopt promptsubst
 
-PROMPT='$(zigbar prompt --columns="$COLUMNS" --duration="${ZIGBAR_DURATION:-}")'
+PROMPT='$(zsp prompt --columns="$COLUMNS" --duration="${ZSP_DURATION:-}")'

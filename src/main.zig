@@ -39,7 +39,7 @@ pub fn main() !void {
     }
 
     if (args.items.contains("version")) {
-        tty.print("zigbar {} ({s})\n", .{
+        tty.print("zsp {} ({s})\n", .{
             update.build_version,
             update.build_triple,
         });

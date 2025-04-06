@@ -1,8 +1,8 @@
-# ⚡ Zigbar
+# ⚡ ZSP
 
-Zigbar is my personal ZSH prompt written in [Zig](https://ziglang.org).
+ZSP is my personal ZSH prompt written in [Zig](https://ziglang.org).
 
-<img alt="screenshot of Zigbar prompt in a terminal" src=".github/screenshot.avif" width="640">
+<img alt="screenshot of ZSP prompt in a terminal" src=".github/screenshot.avif" width="640">
 
 From the blog:
 

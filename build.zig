@@ -1,8 +1,8 @@
 const std = @import("std");
 // const zon: struct { version: []const u8 } = @import("./build.zig.zon");
 
-const name = "zigbar";
-const version = std.SemanticVersion.parse("0.6.0") catch unreachable;
+const name = "zsp";
+const version = std.SemanticVersion.parse("0.7.0") catch unreachable;
 
 const targets: []const std.Target.Query = &.{
     .{ .cpu_arch = .aarch64, .os_tag = .macos },

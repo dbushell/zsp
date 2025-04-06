@@ -20,7 +20,7 @@ pub const build_triple: []const u8 = config.triple;
 pub const build_version: Version = config.version;
 
 // Should I be using path builder? (Windows is not supported)
-const tmp_path = "/tmp/zigbar";
+const tmp_path = "/tmp/zsp";
 const tar_prefix = build_name ++ "-" ++ build_triple;
 const tar_name = tar_prefix ++ ".tar.gz";
 const tar_path = tmp_path ++ "/" ++ tar_name;
@@ -57,7 +57,7 @@ pub fn download(allocator: Allocator, options: UpdateOptions) UpdateError!Versio
             "Accept: application/vnd.github+json",
             "-H",
             "X-GitHub-Api-Version: 2022-11-28",
-            "https://api.github.com/repos/dbushell/zigbar/releases",
+            "https://api.github.com/repos/dbushell/zsp/releases",
         },
     }) catch return error.ApiError;
     defer {
@@ -158,5 +158,5 @@ fn installBinary(allocator: Allocator, dir: fs.Dir) !void {
     const exe_path = try fs.selfExePathAlloc(allocator);
     defer allocator.free(exe_path);
     try fs.deleteFileAbsolute(exe_path);
-    try fs.copyFileAbsolute(tmp_path ++ "/zigbar", exe_path, .{});
+    try fs.copyFileAbsolute(tmp_path ++ "/zsp", exe_path, .{});
 }
