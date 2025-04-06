@@ -8,6 +8,8 @@ const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
 const Allocator = std.mem.Allocator;
 
+const init_zsh = @embedFile("./shell/zsh.sh");
+
 const default_columns: usize = 80;
 
 pub fn main() !void {
@@ -41,6 +43,11 @@ pub fn main() !void {
             update.build_version,
             update.build_triple,
         });
+        return;
+    }
+
+    if (args.items.contains("zsh")) {
+        tty.write(init_zsh);
         return;
     }
 

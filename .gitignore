@@ -2,7 +2,7 @@
 zig-out
 **/*.*
 !**/*.zig
-!init.sh
+!src/shell/*.sh
 !build.zig
 !build.zig.zon
 !.github
