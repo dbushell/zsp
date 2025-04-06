@@ -11,6 +11,16 @@ From the blog:
 
 This is a hobby project for me to learn Zig software development.
 
+## Usage
+
+Add to `.zshrc`:
+
+```zsh
+source <(zsp --zsh)
+```
+
+See [`src/shell/zsh.sh`](/src/shell/zsh.sh) for the source.
+
 ## 🚧 Under Construction!
 
 I'm working on new features as I use the prompt day-to-day.
