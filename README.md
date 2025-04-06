@@ -13,7 +13,7 @@ This is a hobby project for me to learn Zig software development.
 
 ## Usage
 
-Add to `.zshrc`:
+Ensure `zsp` binary is in `$PATH` and add to `.zshrc`:
 
 ```zsh
 source <(zsp --zsh)
