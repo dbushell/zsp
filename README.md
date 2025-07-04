@@ -19,6 +19,15 @@ Ensure `zsp` binary is in `$PATH` and add to `.zshrc`:
 source <(zsp --zsh)
 ```
 
+Optionally, a space-separated list of environment variables can be supplied
+via the environment variable `ZSP_PROMPT_ENV_VARS`. Prefix an environment
+variable name with and equal sign (`=`) to print the variable name and
+value.  Otherwise, just the value will be printed.
+
+```zsh
+export ZSP_PROMPT_ENV_VARS="AWS_PROFILE =HOSTTYPE"
+```
+
 See [`src/shell/zsh.sh`](/src/shell/zsh.sh) for the source.
 
 ## 🚧 Under Construction!

@@ -7,6 +7,7 @@ const Host = @import("./Host.zig");
 const TTY = @import("./TTY.zig");
 const Prop = @import("./prop.zig").Prop;
 const Allocator = std.mem.Allocator;
+const posix = std.posix;
 
 const init_zsh = @embedFile("./shell/zsh.sh");
 
@@ -111,6 +112,27 @@ fn promptCommand(allocator: Allocator, args: *Args, tty: *TTY) !void {
             tty.ansi(&.{.reset});
             const time = std.fmt.fmtDuration(@intCast(std.time.ns_per_ms * duration.int));
             tty.print(" | {d}", .{time});
+        }
+    }
+
+    // Print: " | ENV_VAR1=VALUE1 | VALUE2"
+    // Set the environment variables as a space-separated list
+    // in the ZSP_PROMPT_ENV_VARS environment variable.
+    // If the variable is prefixed with equal sign (=), print the variable name.
+    const env_vars_str = posix.getenv("ZSP_PROMPT_ENV_VARS") orelse null;
+    if (env_vars_str) |ptr| {
+        tty.ansi(&.{.reset});
+        var it = std.mem.tokenizeScalar(u8, ptr, ' ');
+        while (it.next()) |var_name| {
+            if (var_name[0] == '=') {
+                if (posix.getenv(var_name[1..])) |value| {
+                    tty.print(" | {s}={s}", .{ var_name[1..], value });
+                }
+            } else {
+                if (posix.getenv(var_name)) |value| {
+                    tty.print(" | {s}", .{value});
+                }
+            }
         }
     }
 
