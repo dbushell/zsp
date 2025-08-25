@@ -2,7 +2,7 @@ const std = @import("std");
 // const zon: struct { version: []const u8 } = @import("./build.zig.zon");
 
 const name = "zsp";
-const version = std.SemanticVersion.parse("0.8.0") catch unreachable;
+const version = std.SemanticVersion.parse("0.9.0") catch unreachable;
 
 const targets: []const std.Target.Query = &.{
     .{ .cpu_arch = .aarch64, .os_tag = .macos },

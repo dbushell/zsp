@@ -54,10 +54,8 @@ pub fn download(allocator: Allocator, options: UpdateOptions) UpdateError!Versio
             "curl",
             "-L",
             "-H",
-            "Accept: application/vnd.github+json",
-            "-H",
-            "X-GitHub-Api-Version: 2022-11-28",
-            "https://api.github.com/repos/dbushell/zsp/releases",
+            "Accept: application/json",
+            "https://git.dbushell.com/api/v1/repos/dbushell/zsp/releases?draft=false&pre-release=false",
         },
     }) catch return error.ApiError;
     defer {

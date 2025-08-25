@@ -1,6 +1,6 @@
 .{
     .name = .zsp,
-    .version = "0.8.0",
+    .version = "0.9.0",
     .fingerprint = 0xf2306f9dd50373c9,
     .minimum_zig_version = "0.14.0",
     .paths = .{
