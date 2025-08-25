@@ -1,36 +1,11 @@
-# ⚡ ZSP
+# 💀 REPO MOVED OFF GITHUB
 
-ZSP is my personal ZSH prompt written in [Zig](https://ziglang.org).
+[**GitHub has ensloppified.**](https://dbushell.com/2025/08/11/github-ensloppification/)
 
-<img alt="screenshot of ZSP prompt in a terminal" src=".github/screenshot.avif" width="640">
+Find the new repo here: [https://git.dbushell.com/dbushell/zsp](https://git.dbushell.com/dbushell/zsp)
 
-From the blog:
+Reject "AI" :)
 
-* ["I built a ZSH Prompt with Zig"](https://dbushell.com/2025/03/05/zig-zsh-prompt/)
-* ["Zig App Release and Updates via Github"](https://dbushell.com/2025/03/18/zig-app-release-and-updates-via-github/)
+> [!WARNING]
+> [Release v0.9.0](https://github.com/dbushell/zsp/releases/tag/v0.9.0) is the final GitHub release. Run `zsp update` to update to v0.9. Run `zsp update` again from v0.9 to update to v0.10 from the new repository. Basically run `zsp update` twice.
 
-This is a hobby project for me to learn Zig software development.
-
-## Usage
-
-Ensure `zsp` binary is in `$PATH` and add to `.zshrc`:
-
-```zsh
-source <(zsp --zsh)
-```
-
-See [`src/shell/zsh.sh`](/src/shell/zsh.sh) for the source.
-
-## 🚧 Under Construction!
-
-I'm working on new features as I use the prompt day-to-day.
-
-There is no config unless you edit the source code and recompile!
-
-## Notes
-
-Inspired by [Starship](https://github.com/starship/starship) and [Pure](https://github.com/sindresorhus/pure).
-
-* * *
-
-[MIT License](/LICENSE) | Copyright © 2025 [David Bushell](https://dbushell.com)
